@@ -18,6 +18,7 @@ export type LLMprovider =
   | "google"
   | "aws"
   | "openrouter"
+  | "deepseek"
   | ProviderV1;
 
 export type LLMConfig = {
