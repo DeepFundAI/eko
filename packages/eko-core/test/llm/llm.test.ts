@@ -1,6 +1,6 @@
 import {
-  LanguageModelV1Prompt,
-  LanguageModelV1StreamPart,
+  LanguageModelV2Prompt,
+  LanguageModelV2StreamPart,
 } from "@ai-sdk/provider";
 import { toImage } from "../../src/common/utils";
 import { RetryLanguageModel } from "../../src/llm";
@@ -17,13 +17,13 @@ const claudeApiKey = process.env.ANTHROPIC_API_KEY;
 const llms: LLMs = {
   default: {
     provider: "openai",
-    model: "gpt-4.1-mini",
+    model: "gpt-5-mini",
     apiKey: openaiApiKey || "",
     config: {
       baseURL: openaiBaseURL,
     },
     fetch: (url, options) => {
-      const body = JSON.parse(options.body);
+      const body = JSON.parse(options?.body as string);
       body.user = "zhuowei@fellou.ai";
       body.metadata = {
         test: "xxx",
@@ -53,7 +53,7 @@ const llms: LLMs = {
   },
   openai: {
     provider: "openai",
-    model: "gpt-4.1-mini",
+    model: "gpt-5-mini",
     apiKey: openaiApiKey || "",
     config: {
       baseURL: openaiBaseURL,
@@ -77,12 +77,12 @@ async function testRetryGenerate() {
   let result = await client.call({
     maxTokens: 1024,
     temperature: 0.7,
-    messages: [{ role: "user", content: [{ type: "text", text: "你好" }] }],
+    messages: [{ role: "user", content: [{ type: "text", text: "Hello" }] }],
   });
 
   console.log(JSON.stringify(result, null, 2));
 
-  console.log(result.finishReason, result.text, result.usage);
+  console.log(result.finishReason, result.content, result.usage);
 }
 
 async function testOpenaiStream() {
@@ -91,7 +91,7 @@ async function testOpenaiStream() {
   let result = await client.callStream({
     maxTokens: 1024,
     temperature: 0.7,
-    messages: [{ role: "user", content: [{ type: "text", text: "你好" }] }],
+    messages: [{ role: "user", content: [{ type: "text", text: "Hello" }] }],
   });
 
   console.log(JSON.stringify(result, null, 2));
@@ -104,7 +104,7 @@ async function testOpenaiStream() {
         console.log("===> done", value);
         break;
       }
-      let chunk = value as LanguageModelV1StreamPart;
+      let chunk = value as LanguageModelV2StreamPart;
       console.log("chunk: ", chunk);
     }
   } finally {
@@ -121,7 +121,7 @@ export async function testToolsPrompt() {
         type: "function",
         name: "get_current_country",
         description: "user current country",
-        parameters: {
+        inputSchema: {
           type: "object",
           properties: {},
         },
@@ -130,7 +130,7 @@ export async function testToolsPrompt() {
         type: "function",
         name: "web_search",
         description: "google search tool",
-        parameters: {
+        inputSchema: {
           type: "object",
           properties: {
             query: {
@@ -154,7 +154,7 @@ export async function testToolsPrompt() {
     },
     messages: [
       { role: "system", content: "You are a helpful AI assistant" },
-      { role: "user", content: [{ type: "text", text: "搜索最近的国家大事" }] },
+      { role: "user", content: [{ type: "text", text: "Search for recent national affairs" }] },
     ],
     maxTokens: 1024,
     temperature: 0.7,
@@ -162,7 +162,7 @@ export async function testToolsPrompt() {
 
   console.log(JSON.stringify(result, null, 2));
 
-  console.log(result.finishReason, result.text, result.toolCalls, result.usage);
+  console.log(result.finishReason, result.text, result.content, result.usage);
 }
 
 async function testImage() {
@@ -177,11 +177,11 @@ async function testImage() {
         role: "user",
         content: [
           {
-            type: "image",
-            image: toImage(imageBase64),
-            mimeType: "image/jpeg",
+            type: "file",
+            data: toImage(imageBase64),
+            mediaType: "image/jpeg",
           },
-          { type: "text", text: "图片中包含什么？" },
+          { type: "text", text: "What is included in the picture?" },
         ],
       },
     ],
@@ -201,7 +201,7 @@ export async function testImageToolsPrompt(llm: "openai" | "claude") {
         type: "function",
         name: "random_gen_image",
         description: "Randomly generate various images, handwritten text",
-        parameters: {
+        inputSchema: {
           type: "object",
           properties: {
             type: {
@@ -221,7 +221,7 @@ export async function testImageToolsPrompt(llm: "openai" | "claude") {
       { role: "system", content: "You are a helpful AI assistant" },
       {
         role: "user",
-        content: [{ type: "text", text: "帮我随机生成文字手写图片" }],
+        content: [{ type: "text", text: "Help me randomly generate handwritten text images" }],
       },
       {
         role: "assistant",
@@ -230,7 +230,7 @@ export async function testImageToolsPrompt(llm: "openai" | "claude") {
             type: "tool-call",
             toolCallId: "tool_613DVw1dqWT9d33YDkZDKhFH",
             toolName: "random_gen_image",
-            args: { type: "handwritten_text" },
+            input: { type: "handwritten_text" },
           },
         ],
       },
@@ -244,14 +244,16 @@ export async function testImageToolsPrompt(llm: "openai" | "claude") {
                   type: "tool-result",
                   toolCallId: "tool_613DVw1dqWT9d33YDkZDKhFH",
                   toolName: "random_gen_image",
-                  result: { success: true },
-                  content: [
-                    {
-                      type: "image",
-                      data: imageBase64,
-                      mimeType: "image/jpeg",
-                    },
-                  ],
+                  output: {
+                    type: "content",
+                    value: [
+                      {
+                        type: "media",
+                        data: imageBase64,
+                        mediaType: "image/jpeg",
+                      }
+                    ]
+                  },
                 },
               ],
             },
@@ -264,7 +266,10 @@ export async function testImageToolsPrompt(llm: "openai" | "claude") {
                   type: "tool-result",
                   toolCallId: "tool_613DVw1dqWT9d33YDkZDKhFH",
                   toolName: "random_gen_image",
-                  result: { success: true },
+                  output: {
+                    type: "json",
+                    value: { success: true },
+                  }
                 },
               ],
             },
@@ -272,14 +277,14 @@ export async function testImageToolsPrompt(llm: "openai" | "claude") {
               role: "user",
               content: [
                 {
-                  type: "image",
-                  image: toImage(imageBase64),
-                  mimeType: "image/jpeg",
+                  type: "file",
+                  data: toImage(imageBase64),
+                  mediaType: "image/jpeg",
                 },
                 { type: "text", text: "call `random_gen_image` tool result" },
               ],
             },
-          ]) as LanguageModelV1Prompt),
+          ]) as LanguageModelV2Prompt),
     ],
     maxTokens: 1024,
     temperature: 0.7,
@@ -296,10 +301,10 @@ export async function testImageToolsPrompt(llm: "openai" | "claude") {
         console.log("===> done", value);
         break;
       }
-      let chunk = value as LanguageModelV1StreamPart;
+      let chunk = value as LanguageModelV2StreamPart;
       console.log("chunk: ", chunk);
       if (chunk.type == "text-delta") {
-        resultText += chunk.textDelta;
+        resultText += chunk.delta;
       }
     }
   } finally {

@@ -35,6 +35,7 @@ export class SimpleHttpMcpClient implements IMcpClient {
 
   async connect(signal?: AbortSignal): Promise<void> {
     Log.info("MCP Client, connecting...", this.httpUrl);
+    this.mcpSessionId = null;
     await this.request("initialize", {
       protocolVersion: this.protocolVersion,
       capabilities: {
@@ -48,9 +49,6 @@ export class SimpleHttpMcpClient implements IMcpClient {
         version: "1.0.0",
       },
     }, signal);
-    if (this.mcpSessionId) {
-      this.request("notifications/initialized", {}, signal);
-    }
     this.connected = true;
   }
 
@@ -87,12 +85,17 @@ export class SimpleHttpMcpClient implements IMcpClient {
         requestId: uuidv4(),
         reason: "User requested cancellation",
       });
+      this.mcpSessionId = null;
     }
   }
 
   async request(method: string, params: Record<string, any>, signal?: AbortSignal): Promise<any> {
     try {
       const id = uuidv4();
+      const extHeaders: Record<string, string> = {};
+      if (this.mcpSessionId && method !== "initialize") {
+        extHeaders["Mcp-Session-Id"] = this.mcpSessionId
+      }
       const response = await fetch(this.httpUrl, {
         method: "POST",
         headers: {
@@ -100,7 +103,7 @@ export class SimpleHttpMcpClient implements IMcpClient {
           "Content-Type": "application/json",
           "Accept": "application/json, text/event-stream",
           "MCP-Protocol-Version": this.protocolVersion,
-          ...(this.mcpSessionId ? { "Mcp-Session-Id": this.mcpSessionId } : {}),
+          ...extHeaders,
           ...this.headers,
         },
         body: JSON.stringify({

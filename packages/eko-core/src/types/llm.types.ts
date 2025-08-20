@@ -1,15 +1,17 @@
 import {
-  ProviderV1,
-  LanguageModelV1CallWarning,
-  LanguageModelV1FinishReason,
-  LanguageModelV1FunctionToolCall,
-  LanguageModelV1ProviderMetadata,
-  LanguageModelV1Source,
-  LanguageModelV1StreamPart,
-  LanguageModelV1FunctionTool,
-  LanguageModelV1ToolChoice,
-  LanguageModelV1Prompt,
-  LanguageModelV1CallOptions,
+  ProviderV2,
+  LanguageModelV2CallWarning,
+  LanguageModelV2FinishReason,
+  LanguageModelV2StreamPart,
+  LanguageModelV2FunctionTool,
+  LanguageModelV2ToolChoice,
+  LanguageModelV2Prompt,
+  LanguageModelV2CallOptions,
+  LanguageModelV2Content,
+  SharedV2Headers,
+  SharedV2ProviderMetadata,
+  LanguageModelV2Usage,
+  LanguageModelV2ResponseMetadata,
 } from "@ai-sdk/provider";
 
 export type LLMprovider =
@@ -19,7 +21,8 @@ export type LLMprovider =
   | "aws"
   | "openrouter"
   | "deepseek"
-  | ProviderV1;
+  | "openai-compatible"
+  | ProviderV2;
 
 export type LLMConfig = {
   provider: LLMprovider;
@@ -35,7 +38,7 @@ export type LLMConfig = {
   };
   options?: Record<string, any>;
   fetch?: typeof globalThis.fetch;
-  handler?: (options: LanguageModelV1CallOptions) => Promise<LanguageModelV1CallOptions>;
+  handler?: (options: LanguageModelV2CallOptions) => Promise<LanguageModelV2CallOptions>;
 };
 
 export type LLMs = {
@@ -47,72 +50,37 @@ export type GenerateResult = {
   llm: string;
   llmConfig: LLMConfig;
   text?: string;
-  reasoning?:
-    | string
-    | Array<
-        | {
-            type: "text";
-            text: string;
-            signature?: string;
-          }
-        | {
-            type: "redacted";
-            data: string;
-          }
-      >;
-  files?: Array<{
-    data: string | Uint8Array;
-    mimeType: string;
-  }>;
-  toolCalls?: Array<LanguageModelV1FunctionToolCall>;
-  finishReason: LanguageModelV1FinishReason;
-  usage: {
-    promptTokens: number;
-    completionTokens: number;
-  };
-  rawCall: {
-    rawPrompt: unknown;
-    rawSettings: Record<string, unknown>;
-  };
-  rawResponse?: {
-    headers?: Record<string, string>;
+  content: Array<LanguageModelV2Content>;
+  finishReason: LanguageModelV2FinishReason;
+  usage: LanguageModelV2Usage;
+  providerMetadata?: SharedV2ProviderMetadata;
+  request?: {
     body?: unknown;
   };
-  request?: {
-    body?: string;
+  response?: LanguageModelV2ResponseMetadata & {
+    headers?: SharedV2Headers;
+    body?: unknown;
   };
-  response?: {
-    id?: string;
-    timestamp?: Date;
-    modelId?: string;
-  };
-  warnings?: LanguageModelV1CallWarning[];
-  providerMetadata?: LanguageModelV1ProviderMetadata;
-  sources?: LanguageModelV1Source[];
+  warnings: Array<LanguageModelV2CallWarning>;
 };
 
 export type StreamResult = {
   llm: string;
   llmConfig: LLMConfig;
-  stream: ReadableStream<LanguageModelV1StreamPart>;
-  rawCall: {
-    rawPrompt: unknown;
-    rawSettings: Record<string, unknown>;
-  };
-  rawResponse?: {
-    headers?: Record<string, string>;
-  };
+  stream: ReadableStream<LanguageModelV2StreamPart>;
   request?: {
-    body?: string;
+    body?: unknown;
   };
-  warnings?: Array<LanguageModelV1CallWarning>;
+  response?: {
+    headers?: SharedV2Headers;
+  };
 };
 
 export type LLMRequest = {
   maxTokens?: number;
-  messages: LanguageModelV1Prompt;
-  toolChoice?: LanguageModelV1ToolChoice;
-  tools?: Array<LanguageModelV1FunctionTool>;
+  messages: LanguageModelV2Prompt;
+  toolChoice?: LanguageModelV2ToolChoice;
+  tools?: Array<LanguageModelV2FunctionTool>;
   temperature?: number;
   topP?: number;
   topK?: number;

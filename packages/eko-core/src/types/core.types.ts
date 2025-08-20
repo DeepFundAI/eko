@@ -1,4 +1,4 @@
-import { LanguageModelV1FinishReason } from "@ai-sdk/provider";
+import { LanguageModelV2FinishReason } from "@ai-sdk/provider";
 import { Agent } from "../agent";
 import { LLMs } from "./llm.types";
 import { IA2aClient } from "../agent/a2a";
@@ -79,10 +79,11 @@ export type StreamCallbackMessage = {
     }
   | {
       type: "finish";
-      finishReason: LanguageModelV1FinishReason;
+      finishReason: LanguageModelV2FinishReason;
       usage: {
         promptTokens: number;
         completionTokens: number;
+        totalTokens: number;
       };
     }
 );
@@ -170,7 +171,8 @@ export type EkoResult = {
   taskId: string;
   success: boolean;
   stopReason: "abort" | "error" | "done";
-  result?: any;
+  result: string;
+  error?: unknown;
 };
 
 export type NormalAgentNode = {

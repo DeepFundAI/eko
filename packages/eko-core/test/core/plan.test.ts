@@ -28,7 +28,7 @@ const llms: LLMs = {
       baseURL: openaiBaseURL,
     },
     fetch: (url, options) => {
-      const body = JSON.parse(options.body);
+      const body = JSON.parse(options?.body as string);
       console.log("====> body", JSON.stringify(body, null, 2));
       return fetch(url, {
         ...options,

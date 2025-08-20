@@ -1,32 +1,41 @@
-import { AgentContext } from "../../src";
-import { ToolResult } from "../../src/types/tools.types";
-import { BaseBrowserLabelsAgent, BaseChatAgent, BaseComputerAgent, BaseFileAgent } from "../../src/agent";
+import { Agent, AgentContext } from "../../src";
+import { ToolResult, IMcpClient } from "../../src/types";
+import { BaseBrowserLabelsAgent, BaseComputerAgent, BaseFileAgent } from "../../src/agent";
 
-export class SimpleChatAgent extends BaseChatAgent {
-  constructor(llms?: string[]) {
-    super(llms, [
-      {
-        name: "get_weather",
-        description: "weather query",
-        parameters: {
-          type: "object",
-          properties: {
-            city: {
-              type: "string",
-              default: "Beijing",
+export class SimpleChatAgent extends Agent {
+  constructor(llms?: string[], mcpClient?: IMcpClient) {
+    super({
+      name: "Chat",
+      description: "You are a helpful assistant.",
+      tools: [
+        {
+          name: "get_weather",
+          description: "weather query",
+          parameters: {
+            type: "object",
+            properties: {
+              city: {
+                type: "string",
+                default: "Beijing",
+              },
             },
           },
+          execute: async (
+            args: Record<string, unknown>,
+            agentContext: AgentContext
+          ): Promise<ToolResult> => {
+            return await this.callInnerTool(() =>
+              (async () =>
+                `Today, the weather in ${args.city} is cloudy, 25-30° (Celsius), suitable for going out for a walk.`)()
+            );
+          },
         },
-        execute: async (
-          args: Record<string, unknown>,
-          agentContext: AgentContext
-        ): Promise<ToolResult> => {
-          return await this.callInnerTool(() =>
-            (async () => `Today, the weather in ${args.city} is cloudy, 25-30° (Celsius), suitable for going out for a walk.`)()
-          );
-        },
-      },
-    ]);
+      ],
+      llms: llms,
+      mcpClient: mcpClient,
+      planDescription:
+        "Chat assistant, handles non-task related conversations. Please use it to reply when the task does not involve operations with other agents.",
+    });
   }
 }
 

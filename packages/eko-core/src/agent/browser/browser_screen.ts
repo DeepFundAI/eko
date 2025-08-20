@@ -1,6 +1,6 @@
 import { BaseBrowserAgent, AGENT_NAME } from "./browser_base";
 import { AgentContext } from "../../core/context";
-import { LanguageModelV1Prompt } from "@ai-sdk/provider";
+import { LanguageModelV2Prompt } from "@ai-sdk/provider";
 import { Tool, ToolResult, IMcpClient } from "../../types";
 import { mergeTools, sleep, toImage } from "../../common/utils";
 
@@ -399,7 +399,7 @@ export default abstract class BaseBrowserScreenAgent extends BaseBrowserAgent {
 
   protected async handleMessages(
     agentContext: AgentContext,
-    messages: LanguageModelV1Prompt,
+    messages: LanguageModelV2Prompt,
     tools: Tool[]
   ): Promise<void> {
     let lastTool = this.lastToolResult(messages);
@@ -416,9 +416,9 @@ export default abstract class BaseBrowserScreenAgent extends BaseBrowserAgent {
         role: "user",
         content: [
           {
-            type: "image",
-            image: image,
-            mimeType: result.imageType,
+            type: "file",
+            data: image,
+            mediaType: result.imageType,
           },
           {
             type: "text",

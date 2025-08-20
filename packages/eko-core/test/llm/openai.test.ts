@@ -1,59 +1,46 @@
+import dotenv from "dotenv";
 import { createOpenAI } from "@ai-sdk/openai";
-import { LanguageModelV1, LanguageModelV1StreamPart } from "@ai-sdk/provider";
-import dotenv from 'dotenv';
+import { defaultMessageProviderOptions } from "../../src/agent/llm";
+import { LanguageModelV2, LanguageModelV2StreamPart } from "@ai-sdk/provider";
 
 dotenv.config();
 
 const baseURL = process.env.OPENAI_BASE_URL;
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
-  throw new Error('OPENAI_API_KEY environment variable is required for integration tests');
+  throw new Error(
+    "OPENAI_API_KEY environment variable is required for integration tests"
+  );
 }
 
 export async function testOpenaiPrompt() {
-  const client: LanguageModelV1 = createOpenAI({
+  const client: LanguageModelV2 = createOpenAI({
     apiKey: apiKey,
     baseURL: baseURL,
-  }).languageModel("gpt-4.1-mini");
+  }).languageModel("gpt-5-mini");
 
   let result = await client.doGenerate({
-    inputFormat: "messages",
-    mode: {
-      type: "regular",
-    },
-    prompt: [{ role: "user", content: [{ type: "text", text: "你好" }] }],
-    maxTokens: 1024,
+    prompt: [{ role: "user", content: [{ type: "text", text: "Hello" }] }],
+    maxOutputTokens: 1024,
     temperature: 0.7,
-    providerMetadata: {
-    },
   });
 
   console.log(JSON.stringify(result, null, 2));
 
-  console.log(result.finishReason, result.text, result.usage);
+  console.log(result.finishReason, result.content, result.usage);
 }
 
 export async function testOpenaiStream() {
-  const client: LanguageModelV1 = createOpenAI({
+  const client: LanguageModelV2 = createOpenAI({
     apiKey: apiKey,
     baseURL: baseURL,
-  }).languageModel("gpt-4.1-mini");
+  }).languageModel("gpt-5-mini");
 
   let result = await client.doStream({
-    inputFormat: "messages",
-    mode: {
-      type: "regular",
-    },
-    prompt: [{ role: "user", content: [{ type: "text", text: "你好" }] }],
-    maxTokens: 1024,
+    prompt: [{ role: "user", content: [{ type: "text", text: "Hello" }] }],
+    maxOutputTokens: 1024,
     temperature: 0.7,
-    providerMetadata: {
-      openai: {
-        stream_options: {
-          include_usage: true,
-        },
-      },
-    },
+    providerOptions: defaultMessageProviderOptions(),
   });
 
   console.log(JSON.stringify(result, null, 2));
@@ -66,7 +53,7 @@ export async function testOpenaiStream() {
         console.log("===> done", value);
         break;
       }
-      let chunk = value as LanguageModelV1StreamPart;
+      let chunk = value as LanguageModelV2StreamPart;
       console.log("chunk: ", chunk);
     }
   } finally {
@@ -74,71 +61,66 @@ export async function testOpenaiStream() {
   }
 }
 
-
 export async function testToolsPrompt() {
-  const client: LanguageModelV1 = createOpenAI({
+  const client: LanguageModelV2 = createOpenAI({
     apiKey: apiKey,
     baseURL: baseURL,
-  }).languageModel("gpt-4.1-mini");
+  }).languageModel("gpt-5-mini");
 
   let result = await client.doGenerate({
-    inputFormat: "messages",
-    mode: {
-      type: "regular",
-      tools: [
-        {
-            "type": "function",
-            "name": "get_current_country",
-            "description": "user current country",
-            "parameters": {
-                "type": "object",
-                "properties": {}
-            }
+    tools: [
+      {
+        type: "function",
+        name: "get_current_country",
+        description: "user current country",
+        inputSchema: {
+          type: "object",
+          properties: {},
         },
-        {
-            "type": "function",
-            "name": "web_search",
-            "description": "google search tool",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "search for keywords"
-                    },
-                    "country": {
-                        "type": "string"
-                    },
-                    "maxResults": {
-                        "type": "number",
-                        "description": "Maximum search results, default 5"
-                    }
-                },
-                "required": [
-                    "query"
-                ]
-            }
-        }
+      },
+      {
+        type: "function",
+        name: "web_search",
+        description: "google search tool",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "search for keywords",
+            },
+            country: {
+              type: "string",
+            },
+            maxResults: {
+              type: "number",
+              description: "Maximum search results, default 5",
+            },
+          },
+          required: ["query"],
+        },
+      },
     ],
-      toolChoice: {
-        type: 'auto'
-      }
+    toolChoice: {
+      type: "auto",
     },
     prompt: [
       { role: "system", content: "You are a helpful AI assistant" },
-      { role: "user", content: [{ type: "text", text: "搜索最近的国家大事" }] },
+      {
+        role: "user",
+        content: [{ type: "text", text: "Search for recent national affairs" }],
+      },
     ],
-    maxTokens: 1024,
+    maxOutputTokens: 1024,
     temperature: 0.7,
-    providerMetadata: {},
+    providerOptions: defaultMessageProviderOptions(),
   });
 
   console.log(JSON.stringify(result, null, 2));
 
-  console.log(result.finishReason, result.text, result.toolCalls, result.usage);
+  console.log(result.finishReason, result.content, result.usage);
 }
 
 test.only("testOpenai", async () => {
   await testOpenaiStream();
 });
-

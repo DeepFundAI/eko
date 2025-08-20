@@ -1,6 +1,6 @@
 {
   "name": "@eko-ai/eko-web-example",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "scripts": {
     "build": "react-scripts build",
     "start": "react-scripts start",

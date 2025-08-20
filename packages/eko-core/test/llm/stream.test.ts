@@ -14,7 +14,7 @@ function createReadableStream(): ReadableStream<String> {
         await (new Promise((resolve) => setTimeout(resolve, 20)));
       }
       controller.enqueue(array.pop());
-      if (count > 10) {
+      if (count >= 10) {
         clearInterval(timer);
         controller.close();
       }

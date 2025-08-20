@@ -1,6 +1,6 @@
 import { Agent } from "../agent";
 import { Tool, ToolSchema } from "../types/tools.types";
-import { LanguageModelV1FunctionTool } from "@ai-sdk/provider";
+import { LanguageModelV2FunctionTool } from "@ai-sdk/provider";
 
 export function sleep(time: number): Promise<void> {
   return new Promise((resolve) => setTimeout(() => resolve(), time));
@@ -38,63 +38,103 @@ export function call_timeout<R extends Promise<any>>(
 
 export function convertToolSchema(
   tool: ToolSchema
-): LanguageModelV1FunctionTool {
+): LanguageModelV2FunctionTool {
   if ("function" in tool) {
     return {
       type: "function",
       name: tool.function.name,
       description: tool.function.description,
-      parameters: tool.function.parameters,
+      inputSchema: tool.function.parameters,
     };
   } else if ("input_schema" in tool) {
     return {
       type: "function",
       name: tool.name,
       description: tool.description,
-      parameters: tool.input_schema,
+      inputSchema: tool.input_schema,
     };
   } else if ("inputSchema" in tool) {
     return {
       type: "function",
       name: tool.name,
       description: tool.description,
-      parameters: tool.inputSchema,
+      inputSchema: tool.inputSchema,
     };
   } else {
     return {
       type: "function",
       name: tool.name,
       description: tool.description,
-      parameters: tool.parameters,
+      inputSchema: tool.parameters,
     };
   }
 }
 
-export function toImage(imageData: string): Uint8Array | URL {
-  let image: Uint8Array | URL | null = null;
-  if (imageData.startsWith("http://") || imageData.startsWith("https://")) {
-    image = new URL(imageData);
-  } else {
-    if (imageData.startsWith("data:image/")) {
-      imageData = imageData.substring(imageData.indexOf(",") + 1);
-    }
+export function toImage(mediaData: string): Uint8Array | string | URL {
+  return toFile(mediaData);
+}
+
+export function toFile(mediaData: string, type: "base64|url" | "binary|url" = "base64|url"): Uint8Array | string | URL {
+  if (mediaData.startsWith("http://") || mediaData.startsWith("https://")) {
+    return new URL(mediaData);
+  } else if (mediaData.startsWith("//") && mediaData.indexOf(".") > 0 && mediaData.length < 1000) {
+    return new URL("https:" + mediaData);
+  }
+  if (mediaData.startsWith("data:")) {
+    mediaData = mediaData.substring(mediaData.indexOf(",") + 1);
+  }
+  if (type === "binary|url") {
     // @ts-ignore
     if (typeof Buffer != "undefined") {
       // @ts-ignore
-      const buffer = Buffer.from(imageData, "base64");
-      image = new Uint8Array(buffer);
+      const buffer = Buffer.from(mediaData, "base64");
+      return new Uint8Array(buffer);
     } else {
-      const binaryString = atob(imageData);
-      image = new Uint8Array(binaryString.length);
+      const binaryString = atob(mediaData);
+      const fileData = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
-        image[i] = binaryString.charCodeAt(i);
+        fileData[i] = binaryString.charCodeAt(i);
       }
+      return fileData;
     }
+  } else {
+    return mediaData;
   }
-  return image;
 }
 
-export function mergeTools<T extends Tool | LanguageModelV1FunctionTool>(tools1: T[], tools2: T[]): T[] {
+export function getMimeType(data: string): string {
+  let mediaType = "image/png";
+  if (data.startsWith("data:")) {
+    mediaType = data.split(";")[0].split(":")[1];
+  } else if (data.indexOf(".") > -1) {
+    if (data.indexOf(".png") > -1) {
+      mediaType = "image/png";
+    } else if (data.indexOf(".jpg") > -1 || data.indexOf(".jpeg") > -1) {
+      mediaType = "image/jpeg";
+    } else if (data.indexOf(".pdf") > -1) {
+      mediaType = "application/pdf";
+    } else if (data.indexOf(".docx") > -1) {
+      mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    } else if (data.indexOf(".xlsx") > -1) {
+      mediaType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    } else if (data.indexOf(".pptx") > -1) {
+      mediaType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    } else if (data.indexOf(".txt") > -1) {
+      mediaType = "text/plain";
+    } else if (data.indexOf(".md") > -1) {
+      mediaType = "text/markdown";
+    } else if (data.indexOf(".json") > -1) {
+      mediaType = "application/json";
+    } else if (data.indexOf(".xml") > -1) {
+      mediaType = "application/xml";
+    } else if (data.indexOf(".csv") > -1) {
+      mediaType = "text/csv";
+    }
+  }
+  return mediaType;
+}
+
+export function mergeTools<T extends Tool | LanguageModelV2FunctionTool>(tools1: T[], tools2: T[]): T[] {
   let tools: T[] = [];
   let toolMap2 = tools2.reduce((map, tool) => {
     map[tool.name] = tool;
@@ -122,28 +162,28 @@ export function mergeTools<T extends Tool | LanguageModelV1FunctionTool>(tools1:
 }
 
 export function mergeAgents(agents1: Agent[], agents2: Agent[]): Agent[] {
-  let tools: Agent[] = [];
-  let toolMap2 = agents2.reduce((map, tool) => {
-    map[tool.Name] = tool;
+  let agents: Agent[] = [];
+  let agentMap2 = agents2.reduce((map, agent) => {
+    map[agent.Name] = agent;
     return map;
   }, {} as Record<string, Agent>);
   for (let i = 0; i < agents1.length; i++) {
-    let tool1 = agents1[i];
-    let tool2 = toolMap2[tool1.Name];
-    if (tool2) {
-      tools.push(tool2);
-      delete toolMap2[tool1.Name];
+    let agent1 = agents1[i];
+    let agent2 = agentMap2[agent1.Name];
+    if (agent2) {
+      agents.push(agent2);
+      delete agentMap2[agent1.Name];
     } else {
-      tools.push(tool1);
+      agents.push(agent1);
     }
   }
   for (let i = 0; i < agents2.length; i++) {
-    let tool2 = agents2[i];
-    if (toolMap2[tool2.Name]) {
-      tools.push(tool2);
+    let agent2 = agents2[i];
+    if (agentMap2[agent2.Name]) {
+      agents.push(agent2);
     }
   }
-  return tools;
+  return agents;
 }
 
 export function sub(
@@ -161,6 +201,10 @@ export function sub(
 }
 
 export function fixXmlTag(code: string) {
+  code = code.trim();
+  if (code.endsWith("<")) {
+    code = code.substring(0, code.length - 1);
+  }
   if (code.indexOf('&') > -1) {
     code = code.replace(/&(?![a-zA-Z0-9#]+;)/g, '&amp;');
   }
@@ -193,6 +237,8 @@ export function fixXmlTag(code: string) {
   } else if (
     endStr == "name" ||
     endStr == "id" ||
+    endStr == "depen" ||
+    endStr == "depends" ||
     endStr == "dependsOn" ||
     endStr == "input" ||
     endStr == "output" ||

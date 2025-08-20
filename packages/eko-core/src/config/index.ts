@@ -9,6 +9,7 @@ type GlobalConfig = {
   largeTextLength: number;
   fileTextMaxLength: number;
   maxDialogueImgFileNum: number;
+  toolResultMultimodal: boolean;
 }
 
 const config: GlobalConfig = {
@@ -22,6 +23,7 @@ const config: GlobalConfig = {
   largeTextLength: 5000,
   fileTextMaxLength: 20000,
   maxDialogueImgFileNum: 1,
+  toolResultMultimodal: true,
 };
 
 export default config;

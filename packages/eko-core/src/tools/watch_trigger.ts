@@ -10,7 +10,7 @@ import { Tool, ToolResult } from "../types/tools.types";
 export const TOOL_NAME = "watch_trigger";
 
 type ImageSource = {
-  image: Uint8Array | URL;
+  image: Uint8Array | URL | string;
   imageType: "image/jpeg" | "image/png";
 };
 
@@ -241,14 +241,14 @@ export default class WatchTriggerTool implements Tool {
             role: "user",
             content: [
               {
-                type: "image",
-                image: image1.image,
-                mimeType: image1.imageType,
+                type: "file",
+                data: image1.image,
+                mediaType: image1.imageType,
               },
               {
-                type: "image",
-                image: image2.image,
-                mimeType: image2.imageType,
+                type: "file",
+                data: image2.image,
+                mediaType: image2.imageType,
               },
               {
                 type: "text",

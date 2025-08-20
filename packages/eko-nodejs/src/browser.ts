@@ -6,6 +6,7 @@ import {
   ElementHandle,
   BrowserContext,
 } from "playwright";
+import { getDefaultChromeUserDataDir } from "./utils";
 
 export default class BrowserAgent extends BaseBrowserLabelsAgent {
   private cdpWsEndpoint?: string;
@@ -22,6 +23,15 @@ export default class BrowserAgent extends BaseBrowserLabelsAgent {
 
   public setCdpWsEndpoint(cdpWsEndpoint: string) {
     this.cdpWsEndpoint = cdpWsEndpoint;
+  }
+
+  public initUserDataDir(userDataDir?: string): string | undefined {
+    if (userDataDir) {
+      this.userDataDir = userDataDir;
+    } else {
+      this.userDataDir = getDefaultChromeUserDataDir(true);
+    }
+    return this.userDataDir;
   }
 
   public setOptions(options?: Record<string, any>) {
@@ -226,18 +236,45 @@ export default class BrowserAgent extends BaseBrowserLabelsAgent {
       this.current_page = null;
       this.browser_context = null;
       if (this.cdpWsEndpoint) {
-        this.browser = await chromium.connectOverCDP(this.cdpWsEndpoint, this.options);
+        this.browser = await chromium.connectOverCDP(
+          this.cdpWsEndpoint,
+          this.options
+        );
         this.browser_context = await this.browser.newContext();
       } else if (this.userDataDir) {
-        this.browser_context = await chromium.launchPersistentContext(this.userDataDir, {
-          headless: this.headless,
-          // channel: 'chrome',
-          ...this.options,
-        });
+        this.browser_context = await chromium.launchPersistentContext(
+          this.userDataDir,
+          {
+            headless: this.headless,
+            // channel: 'chrome',
+            args: [
+              "--no-sandbox",
+              "--remote-allow-origins=*",
+              "--disable-dev-shm-usage",
+              "--disable-popup-blocking",
+              "--enable-automation",
+              "--ignore-ssl-errors",
+              "--ignore-certificate-errors",
+              "--ignore-certificate-errors-spki-list",
+              "--disable-blink-features=AutomationControlled",
+            ],
+            ...this.options,
+          }
+        );
       } else {
         this.browser = await chromium.launch({
           headless: this.headless,
-          args: ["--no-sandbox"],
+          args: [
+            "--no-sandbox",
+            "--remote-allow-origins=*",
+            "--disable-dev-shm-usage",
+            "--disable-popup-blocking",
+            "--enable-automation",
+            "--ignore-ssl-errors",
+            "--ignore-certificate-errors",
+            "--ignore-certificate-errors-spki-list",
+            "--disable-blink-features=AutomationControlled",
+          ],
           ...this.options,
         });
         this.browser_context = await this.browser.newContext();

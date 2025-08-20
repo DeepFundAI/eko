@@ -616,8 +616,12 @@ export function run_build_dom_tree() {
         nodeData.isVisible = isVisible;
         nodeData.isTopElement = isTop;
 
+        // For Shadow DOM elements, use more lenient criteria
+        const isInShadowDOM = node.getRootNode() instanceof ShadowRoot;
+        const shouldHighlight = isInteractive && isVisible && (isTop || isInShadowDOM);
+
         // Highlight if element meets all criteria and highlighting is enabled
-        if (isInteractive && isVisible && isTop) {
+        if (shouldHighlight) {
           nodeData.highlightIndex = highlightIndex++;
           window.clickable_elements[nodeData.highlightIndex] = node;
           if (doHighlightElements) {

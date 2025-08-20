@@ -121,7 +121,7 @@ export function getAgentSystemPrompt(
       if (agentChain.agentResult) {
         prompt += `\n## ${
           agentChain.agent.task || agentChain.agent.name
-        }\n${sub(agentChain.agentResult, 500, true)}`;
+        }\n${sub(agentChain.agentResult, 800, true)}`;
       }
     }
   }

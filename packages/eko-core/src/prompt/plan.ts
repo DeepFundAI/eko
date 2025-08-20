@@ -1,6 +1,5 @@
 import config from "../config";
 import Context from "../core/context";
-import { AGENT_NAME as chat_agent_name } from "../agent/chat";
 
 const PLAN_SYSTEM_TEMPLATE = `
 You are {name}, an autonomous AI Agent Planner.
@@ -271,7 +270,7 @@ export async function getPlanSystemPrompt(context: Context): Promise<string> {
   let plan_example_list =
     context.variables.get("plan_example_list") || PLAN_EXAMPLE_LIST;
   let hasChatAgent =
-    context.agents.filter((a) => a.Name == chat_agent_name).length > 0;
+    context.agents.filter((a) => a.Name == "Chat").length > 0;
   let example_prompt = "";
   const example_list = hasChatAgent
     ? [PLAN_CHAT_EXAMPLE, ...plan_example_list]

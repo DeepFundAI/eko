@@ -1,8 +1,9 @@
 import config from "./config";
 import Log from "./common/log";
-import { Eko } from "./core/index";
 import { Planner } from "./core/plan";
 import { RetryLanguageModel } from "./llm";
+import { EkoMemory } from "./memory/memory";
+import { Eko, EkoDialogue } from "./core/index";
 import Chain, { AgentChain } from "./core/chain";
 import Context, { AgentContext } from "./core/context";
 import { SimpleSseMcpClient, SimpleHttpMcpClient } from "./mcp";
@@ -11,6 +12,8 @@ export default Eko;
 
 export {
   Eko,
+  EkoDialogue,
+  EkoMemory,
   Log,
   config,
   Context,
@@ -26,7 +29,6 @@ export {
 export {
   Agent,
   type AgentParams,
-  BaseChatAgent,
   BaseFileAgent,
   BaseShellAgent,
   BaseComputerAgent,
@@ -58,6 +60,7 @@ export {
 export {
   mergeTools,
   toImage,
+  toFile,
   convertToolSchema,
   uuidv4,
   call_timeout,

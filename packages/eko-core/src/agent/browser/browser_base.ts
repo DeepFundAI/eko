@@ -1,6 +1,6 @@
 import {
-  LanguageModelV1Prompt,
-  LanguageModelV1ToolCallPart,
+  LanguageModelV2Prompt,
+  LanguageModelV2ToolCallPart,
 } from "@ai-sdk/provider";
 import { Agent } from "../base";
 import { sleep } from "../../common/utils";
@@ -81,7 +81,7 @@ export default abstract class BaseBrowserAgent extends Agent {
 
   protected async controlMcpTools(
     agentContext: AgentContext,
-    messages: LanguageModelV1Prompt,
+    messages: LanguageModelV2Prompt,
     loopNum: number
   ): Promise<{ mcpTools: boolean; mcpParams?: Record<string, unknown> }> {
     if (loopNum > 0) {
@@ -176,12 +176,11 @@ export default abstract class BaseBrowserAgent extends Agent {
     );
   }
 
-  protected lastToolResult(messages: LanguageModelV1Prompt): {
+  protected lastToolResult(messages: LanguageModelV2Prompt): {
     id: string;
     toolName: string;
     args: unknown;
     result: unknown;
-    isError?: boolean;
   } | null {
     let lastMessage = messages[messages.length - 1];
     if (lastMessage.role != "tool") {
@@ -193,8 +192,7 @@ export default abstract class BaseBrowserAgent extends Agent {
     if (!toolResult) {
       return null;
     }
-    let result = toolResult.result;
-    let isError = toolResult.isError;
+    let result = toolResult.output.value;
     for (let i = messages.length - 2; i > 0; i--) {
       if (
         messages[i].role !== "assistant" ||
@@ -207,23 +205,22 @@ export default abstract class BaseBrowserAgent extends Agent {
         if (typeof content !== "string" && content.type !== "tool-call") {
           continue;
         }
-        let toolUse = content as LanguageModelV1ToolCallPart;
+        let toolUse = content as LanguageModelV2ToolCallPart;
         if (toolResult.toolCallId != toolUse.toolCallId) {
           continue;
         }
         return {
           id: toolResult.toolCallId,
           toolName: toolUse.toolName,
-          args: toolUse.args,
+          args: toolUse.input,
           result,
-          isError,
         };
       }
     }
     return null;
   }
 
-  protected toolUseNames(messages?: LanguageModelV1Prompt): string[] {
+  protected toolUseNames(messages?: LanguageModelV2Prompt): string[] {
     let toolNames: string[] = [];
     if (!messages) {
       return toolNames;

@@ -1,8 +1,8 @@
 import {
-  LanguageModelV1FunctionTool,
-  LanguageModelV1Prompt,
-  LanguageModelV1TextPart,
-  LanguageModelV1ToolCallPart,
+  LanguageModelV2FunctionTool,
+  LanguageModelV2Prompt,
+  LanguageModelV2TextPart,
+  LanguageModelV2ToolCallPart,
 } from "@ai-sdk/provider";
 import config from "../config";
 import { Tool } from "../types";
@@ -13,8 +13,8 @@ import { mergeTools } from "../common/utils";
 import { AgentContext } from "../core/context";
 import Log from "../common/log";
 
-export function extractUsedTool<T extends Tool | LanguageModelV1FunctionTool>(
-  messages: LanguageModelV1Prompt,
+export function extractUsedTool<T extends Tool | LanguageModelV2FunctionTool>(
+  messages: LanguageModelV2Prompt,
   agentTools: T[]
 ): T[] {
   let tools: T[] = [];
@@ -39,8 +39,8 @@ export function extractUsedTool<T extends Tool | LanguageModelV1FunctionTool>(
 }
 
 export function removeDuplicateToolUse(
-  results: Array<LanguageModelV1TextPart | LanguageModelV1ToolCallPart>
-): Array<LanguageModelV1TextPart | LanguageModelV1ToolCallPart> {
+  results: Array<LanguageModelV2TextPart | LanguageModelV2ToolCallPart>
+): Array<LanguageModelV2TextPart | LanguageModelV2ToolCallPart> {
   if (
     results.length <= 1 ||
     results.filter((r) => r.type == "tool-call").length <= 1
@@ -51,8 +51,8 @@ export function removeDuplicateToolUse(
   let tool_uniques = [];
   for (let i = 0; i < results.length; i++) {
     if (results[i].type === "tool-call") {
-      let tool = results[i] as LanguageModelV1ToolCallPart;
-      let key = tool.toolName + tool.args;
+      let tool = results[i] as LanguageModelV2ToolCallPart;
+      let key = tool.toolName + tool.input;
       if (tool_uniques.indexOf(key) == -1) {
         _results.push(results[i]);
         tool_uniques.push(key);
@@ -67,8 +67,8 @@ export function removeDuplicateToolUse(
 export async function compressAgentMessages(
   agentContext: AgentContext,
   rlm: RetryLanguageModel,
-  messages: LanguageModelV1Prompt,
-  tools: LanguageModelV1FunctionTool[]
+  messages: LanguageModelV2Prompt,
+  tools: LanguageModelV2FunctionTool[]
 ) {
   if (messages.length < 5) {
     return;
@@ -83,8 +83,8 @@ export async function compressAgentMessages(
 async function doCompressAgentMessages(
   agentContext: AgentContext,
   rlm: RetryLanguageModel,
-  messages: LanguageModelV1Prompt,
-  tools: LanguageModelV1FunctionTool[]
+  messages: LanguageModelV2Prompt,
+  tools: LanguageModelV2FunctionTool[]
 ) {
   // extract used tool
   let usedTools = extractUsedTool(messages, tools);
@@ -94,12 +94,12 @@ async function doCompressAgentMessages(
       type: "function",
       name: snapshotTool.name,
       description: snapshotTool.description,
-      parameters: snapshotTool.parameters,
+      inputSchema: snapshotTool.parameters,
     },
   ]);
   // handle messages
   let lastToolIndex = messages.length - 1;
-  let newMessages: LanguageModelV1Prompt = messages;
+  let newMessages: LanguageModelV2Prompt = messages;
   for (let r = newMessages.length - 1; r > 3; r--) {
     if (newMessages[r].role == "tool") {
       newMessages = newMessages.slice(0, r + 1);
@@ -130,9 +130,9 @@ async function doCompressAgentMessages(
   );
   let toolCall = result.filter((s) => s.type == "tool-call")[0];
   let args =
-    typeof toolCall.args == "string"
-      ? JSON.parse(toolCall.args || "{}")
-      : toolCall.args || {};
+    typeof toolCall.input == "string"
+      ? JSON.parse(toolCall.input || "{}")
+      : toolCall.input || {};
   let toolResult = await snapshotTool.execute(args, agentContext);
   let callback = agentContext.context.config.callback;
   if (callback) {
@@ -168,7 +168,7 @@ async function doCompressAgentMessages(
   });
 }
 
-export function handleLargeContextMessages(messages: LanguageModelV1Prompt) {
+export function handleLargeContextMessages(messages: LanguageModelV2Prompt) {
   let imageNum = 0;
   let fileNum = 0;
   let maxNum = config.maxDialogueImgFileNum;
@@ -178,7 +178,7 @@ export function handleLargeContextMessages(messages: LanguageModelV1Prompt) {
     if (message.role == "user") {
       for (let j = 0; j < message.content.length; j++) {
         let content = message.content[j];
-        if (content.type == "image") {
+        if (content.type == "file" && content.mediaType.startsWith("image/")) {
           if (++imageNum <= maxNum) {
             break;
           }
@@ -201,13 +201,16 @@ export function handleLargeContextMessages(messages: LanguageModelV1Prompt) {
     } else if (message.role == "tool") {
       for (let j = 0; j < message.content.length; j++) {
         let toolResult = message.content[j];
-        let toolContent = toolResult.content;
-        if (!toolContent || toolContent.length == 0) {
+        let toolContent = toolResult.output;
+        if (!toolContent || toolContent.type != "content") {
           continue;
         }
-        for (let r = 0; r < toolContent.length; r++) {
-          let _content = toolContent[r];
-          if (_content.type == "image") {
+        for (let r = 0; r < toolContent.value.length; r++) {
+          let _content = toolContent.value[r];
+          if (
+            _content.type == "media" &&
+            _content.mediaType.startsWith("image/")
+          ) {
             if (++imageNum <= maxNum) {
               break;
             }
@@ -215,11 +218,11 @@ export function handleLargeContextMessages(messages: LanguageModelV1Prompt) {
               type: "text",
               text: "[image]",
             };
-            toolContent[r] = _content;
+            toolContent.value[r] = _content;
           }
         }
-        for (let r = 0; r < toolContent.length; r++) {
-          let _content = toolContent[r];
+        for (let r = 0; r < toolContent.value.length; r++) {
+          let _content = toolContent.value[r];
           if (
             _content.type == "text" &&
             _content.text?.length > config.largeTextLength
@@ -234,7 +237,7 @@ export function handleLargeContextMessages(messages: LanguageModelV1Prompt) {
               type: "text",
               text: _content.text.substring(0, config.largeTextLength) + "...",
             };
-            toolContent[r] = _content;
+            toolContent.value[r] = _content;
           }
         }
       }

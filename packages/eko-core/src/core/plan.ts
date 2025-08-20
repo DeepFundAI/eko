@@ -6,9 +6,9 @@ import { LLMRequest } from "../types/llm.types";
 import { StreamCallback, Workflow } from "../types/core.types";
 import { getPlanSystemPrompt, getPlanUserPrompt } from "../prompt/plan";
 import {
-  LanguageModelV1Prompt,
-  LanguageModelV1StreamPart,
-  LanguageModelV1TextPart,
+  LanguageModelV2Prompt,
+  LanguageModelV2StreamPart,
+  LanguageModelV2TextPart,
 } from "@ai-sdk/provider";
 
 export class Planner {
@@ -23,11 +23,11 @@ export class Planner {
   }
 
   async plan(
-    taskPrompt: string | LanguageModelV1TextPart,
+    taskPrompt: string | LanguageModelV2TextPart,
     saveHistory: boolean = true
   ): Promise<Workflow> {
     let taskPromptStr;
-    let userPrompt: LanguageModelV1TextPart;
+    let userPrompt: LanguageModelV2TextPart;
     if (typeof taskPrompt === "string") {
       taskPromptStr = taskPrompt;
       userPrompt = {
@@ -42,7 +42,7 @@ export class Planner {
       userPrompt = taskPrompt;
       taskPromptStr = taskPrompt.text || "";
     }
-    const messages: LanguageModelV1Prompt = [
+    const messages: LanguageModelV2Prompt = [
       {
         role: "system",
         content:
@@ -63,7 +63,7 @@ export class Planner {
   ): Promise<Workflow> {
     const chain = this.context.chain;
     if (chain.planRequest && chain.planResult) {
-      const messages: LanguageModelV1Prompt = [
+      const messages: LanguageModelV2Prompt = [
         ...chain.planRequest.messages,
         {
           role: "assistant",
@@ -82,7 +82,7 @@ export class Planner {
 
   async doPlan(
     taskPrompt: string,
-    messages: LanguageModelV1Prompt,
+    messages: LanguageModelV2Prompt,
     saveHistory: boolean
   ): Promise<Workflow> {
     const config = this.context.config;
@@ -104,16 +104,16 @@ export class Planner {
         if (done) {
           break;
         }
-        let chunk = value as LanguageModelV1StreamPart;
+        let chunk = value as LanguageModelV2StreamPart;
         if (chunk.type == "error") {
           Log.error("Plan, LLM Error: ", chunk);
           throw new Error("LLM Error: " + chunk.error);
         }
-        if (chunk.type == "reasoning") {
-          thinkingText += chunk.textDelta || "";
+        if (chunk.type == "reasoning-delta") {
+          thinkingText += chunk.delta || "";
         }
         if (chunk.type == "text-delta") {
-          streamText += chunk.textDelta || "";
+          streamText += chunk.delta || "";
         }
         if (this.callback) {
           let workflow = parseWorkflow(

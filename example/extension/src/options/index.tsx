@@ -51,6 +51,7 @@ const OptionsPage = () => {
     { value: "anthropic", label: "Claude (default)" },
     { value: "openai", label: "OpenAI" },
     { value: "openrouter", label: "OpenRouter" },
+    { value: "openai-compatible", label: "OpenAI Compatible" },
   ];
 
   const modelOptions = {
@@ -59,7 +60,9 @@ const OptionsPage = () => {
       { value: "claude-3-7-sonnet-20250219", label: "Claude 3.7 Sonnet" },
     ],
     openai: [
-      { value: "gpt-4.1", label: "gpt-4.1 (default)" },
+      { value: "gpt-5", label: "gpt-5 (default)" },
+      { value: "gpt-5-mini", label: "gpt-5-mini" },
+      { value: "gpt-4.1", label: "gpt-4.1" },
       { value: "gpt-4.1-mini", label: "gpt-4.1-mini" },
       { value: "o4-mini", label: "o4-mini" },
     ],
@@ -67,10 +70,15 @@ const OptionsPage = () => {
       { value: "anthropic/claude-sonnet-4", label: "claude-sonnet-4 (default)" },
       { value: "anthropic/claude-3.7-sonnet", label: "claude-3.7-sonnet (default)" },
       { value: "google/gemini-2.5-pro", label: "gemini-2.5-pro" },
+      { value: "openai/gpt-5", label: "gpt-5" },
+      { value: "openai/gpt-5-mini", label: "gpt-5-mini" },
       { value: "openai/gpt-4.1", label: "gpt-4.1" },
       { value: "openai/o4-mini", label: "o4-mini" },
       { value: "openai/gpt-4.1-mini", label: "gpt-4.1-mini" },
       { value: "x-ai/grok-4", label: "grok-4" },
+    ],
+    "openai-compatible": [
+      { value: "doubao-seed-1-6-250615", label: "doubao-seed-1-6-250615" },
     ],
   };
 
@@ -78,7 +86,8 @@ const OptionsPage = () => {
     const baseURLMap = {
       openai: "https://api.openai.com/v1",
       anthropic: "https://api.anthropic.com/v1",
-      openrouter: "https://openrouter.ai/api/v1"
+      openrouter: "https://openrouter.ai/api/v1",
+      "openai-compatible": "https://openrouter.ai/api/v1",
     };
     const newConfig = {
       llm: value,

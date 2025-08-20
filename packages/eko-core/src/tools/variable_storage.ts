@@ -71,9 +71,7 @@ export default class VariableStorageTool implements Tool {
         break;
       }
       case "list_all_variable": {
-        resultText = JSON.stringify(
-          Object.keys(agentContext.context.variables)
-        );
+        resultText = JSON.stringify([...agentContext.context.variables.keys()]);
         break;
       }
     }

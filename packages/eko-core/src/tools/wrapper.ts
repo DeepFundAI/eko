@@ -1,10 +1,10 @@
-import { LanguageModelV1FunctionTool, LanguageModelV1ToolCallPart } from "@ai-sdk/provider";
+import { LanguageModelV2FunctionTool, LanguageModelV2ToolCallPart } from "@ai-sdk/provider";
 import { ToolResult, ToolExecuter, ToolSchema } from "../types/tools.types";
 import { convertToolSchema } from "../common/utils";
 import { AgentContext } from "../core/context";
 
 export class ToolWrapper {
-  private tool: LanguageModelV1FunctionTool;
+  private tool: LanguageModelV2FunctionTool;
   private execute: ToolExecuter;
 
   constructor(toolSchema: ToolSchema, execute: ToolExecuter) {
@@ -16,14 +16,14 @@ export class ToolWrapper {
     return this.tool.name;
   }
 
-  getTool(): LanguageModelV1FunctionTool {
+  getTool(): LanguageModelV2FunctionTool {
     return this.tool;
   }
 
   async callTool(
     args: Record<string, unknown>,
     agentContext: AgentContext,
-    toolCall: LanguageModelV1ToolCallPart
+    toolCall: LanguageModelV2ToolCallPart
   ): Promise<ToolResult> {
     return await this.execute.execute(args, agentContext, toolCall);
   }

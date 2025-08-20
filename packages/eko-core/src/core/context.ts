@@ -3,7 +3,7 @@ import { sleep } from "../common/utils";
 import Chain, { AgentChain } from "./chain";
 import {
   EkoConfig,
-  LanguageModelV1Prompt,
+  LanguageModelV2Prompt,
   Workflow,
   WorkflowAgent,
 } from "../types";
@@ -92,7 +92,7 @@ export class AgentContext {
   agentChain: AgentChain;
   variables: Map<string, any>;
   consecutiveErrorNum: number;
-  messages?: LanguageModelV1Prompt;
+  messages?: LanguageModelV2Prompt;
 
   constructor(context: Context, agent: Agent, agentChain: AgentChain) {
     this.context = context;

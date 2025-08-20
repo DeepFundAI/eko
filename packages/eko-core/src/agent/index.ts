@@ -1,5 +1,4 @@
 import { Agent, AgentParams } from "./base";
-import BaseChatAgent from "./chat";
 import BaseFileAgent from "./file";
 import BaseShellAgent from "./shell";
 import BaseComputerAgent from "./computer";
@@ -11,7 +10,6 @@ import {
 
 export {
   Agent,
-  BaseChatAgent,
   BaseFileAgent,
   BaseShellAgent,
   BaseComputerAgent,

@@ -1,7 +1,7 @@
 import { ToolResult } from "../types/tools.types";
 import { LLMRequest } from "../types/llm.types";
 import { WorkflowAgent } from "../types/core.types";
-import { LanguageModelV1ToolCallPart } from "@ai-sdk/provider";
+import { LanguageModelV2ToolCallPart } from "@ai-sdk/provider";
 
 type ChainEvent = {
   type: "update";
@@ -20,7 +20,7 @@ export class ToolChain {
   toolResult?: ToolResult;
   onUpdate?: () => void;
 
-  constructor(toolUse: LanguageModelV1ToolCallPart, request: LLMRequest) {
+  constructor(toolUse: LanguageModelV2ToolCallPart, request: LLMRequest) {
     this.toolName = toolUse.toolName;
     this.toolCallId = toolUse.toolCallId;
     this.request = JSON.parse(JSON.stringify(request));

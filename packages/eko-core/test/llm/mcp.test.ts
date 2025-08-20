@@ -2,7 +2,7 @@ import Log from "../../src/common/log";
 import { sleep } from "../../src/common/utils";
 import { SimpleSseMcpClient } from "../../src/mcp";
 
-async function testMCP() {
+async function testSseMCP() {
   Log.setLevel(0);
   let sseUrl = "http://localhost:8083/sse";
   let mcpClient = new SimpleSseMcpClient(sseUrl);
@@ -12,7 +12,7 @@ async function testMCP() {
     nodeId: "1",
     environment: "browser",
     agent_name: "Browser",
-    prompt: "查找香港AI前端开发工作",
+    prompt: "Search for Hong Kong AI development jobs",
     browser_url: "https://www.linkedin.com/jobs/",
     params: {},
   });
@@ -31,5 +31,5 @@ async function testMCP() {
 }
 
 test.only("mcp", async () => {
-  await testMCP();
+  await testSseMCP();
 });

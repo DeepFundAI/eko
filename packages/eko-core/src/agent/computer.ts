@@ -2,7 +2,7 @@ import { Agent } from "./base";
 import config from "../config";
 import { AgentContext } from "../core/context";
 import { Tool, ToolResult, IMcpClient } from "../types";
-import { LanguageModelV1Prompt } from "@ai-sdk/provider";
+import { LanguageModelV2Prompt } from "@ai-sdk/provider";
 import { mergeTools, sleep, toImage } from "../common/utils";
 
 export const AGENT_NAME = "Computer";
@@ -347,7 +347,7 @@ This is a computer GUI interface, observe the execution through screenshots, and
 
   protected async handleMessages(
     agentContext: AgentContext,
-    messages: LanguageModelV1Prompt,
+    messages: LanguageModelV2Prompt,
     tools: Tool[]
   ): Promise<void> {
     let lastMessage = messages[messages.length - 1];
@@ -362,9 +362,9 @@ This is a computer GUI interface, observe the execution through screenshots, and
         role: "user",
         content: [
           {
-            type: "image",
-            image: image,
-            mimeType: result.imageType,
+            type: "file",
+            data: image,
+            mediaType: result.imageType,
           },
           {
             type: "text",
@@ -380,9 +380,9 @@ This is a computer GUI interface, observe the execution through screenshots, and
       let result = await this.screenshot(agentContext);
       let image = toImage(result.imageBase64);
       lastMessage.content.push({
-        type: "image",
-        image: image,
-        mimeType: result.imageType,
+        type: "file",
+        data: image,
+        mediaType: result.imageType,
       });
     }
     super.handleMessages(agentContext, messages, tools);

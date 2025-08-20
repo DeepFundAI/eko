@@ -6,7 +6,7 @@ import {
   StreamCallbackMessage,
 } from "../../src/index";
 import dotenv from "dotenv";
-import { SimpleBrowserAgent, SimpleChatAgent } from "./agents";
+import { SimpleBrowserAgent, SimpleChatAgent, SimpleFileAgent } from "./agents";
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ const openaiApiKey = process.env.OPENAI_API_KEY;
 const llms: LLMs = {
   default: {
     provider: "openai",
-    model: "gpt-4.1-mini",
+    model: "gpt-5-mini",
     apiKey: openaiApiKey || "",
     config: {
       baseURL: openaiBaseURL,
@@ -26,7 +26,7 @@ const llms: LLMs = {
 
 async function run() {
   Log.setLevel(0);
-  let callback = {
+  const callback = {
     onMessage: async (message: StreamCallbackMessage) => {
       if (message.type == "workflow" && !message.streamDone) {
         return;
@@ -40,13 +40,14 @@ async function run() {
       console.log("message: ", JSON.stringify(message, null, 2));
     },
   };
-  let agents: Agent[] = [
+  const agents: Agent[] = [
     new SimpleChatAgent(),
-    new SimpleBrowserAgent()
+    new SimpleBrowserAgent(),
+    new SimpleFileAgent(),
   ];
-  let eko = new Eko({ llms, agents, callback });
+  const eko = new Eko({ llms, agents, callback });
   // let result = await eko.run("Who are you?");
-  let result = await eko.run("How is the weather in Beijing?");
+  const result = await eko.run("How is the weather in Beijing?");
   console.log("result: ", result.result);
 }
 
