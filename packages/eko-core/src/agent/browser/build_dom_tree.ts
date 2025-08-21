@@ -418,7 +418,7 @@ export function run_build_dom_tree() {
       function getEventListeners(el) {
         try {
           // Try to get listeners using Chrome DevTools API
-          return window.getEventListeners?.(el) || {};
+          return window.getEventListeners?.(el) || el.getEventListeners?.() || {};
         } catch (e) {
           // Fallback: check for common event properties
           const listeners = {};

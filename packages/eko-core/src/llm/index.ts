@@ -12,6 +12,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createDeepSeek } from "@ai-sdk/deepseek";
+import { createZhipu } from "zhipu-ai-provider";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import {
   GenerateResult,
@@ -298,6 +299,14 @@ export class RetryLanguageModel {
     } else if (llm.provider == "deepseek") {
       console.log("deepseek", apiKey, baseURL, llm.fetch, llm.config?.headers);
       return createDeepSeek({
+        apiKey: apiKey,
+        baseURL: baseURL,
+        fetch: llm.fetch,
+        headers: llm.config?.headers,
+      }).languageModel(llm.model);
+    } else if (llm.provider == "zhipuai") {
+      console.log("zhipuai", apiKey, baseURL, llm.fetch, llm.config?.headers);
+      return createZhipu({
         apiKey: apiKey,
         baseURL: baseURL,
         fetch: llm.fetch,

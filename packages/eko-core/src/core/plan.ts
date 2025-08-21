@@ -97,6 +97,15 @@ export class Planner {
     const reader = result.stream.getReader();
     let streamText = "";
     let thinkingText = "";
+    await this.callback?.onMessage({
+      taskId: this.taskId,
+      agentName: "Planer",
+      type: "workflow",
+      streamDone: false,
+      workflow: {} as Workflow,
+      isDirect: true,
+      speakText: '开始生成计划,请等待...',
+    });
     try {
       while (true) {
         await this.context.checkAborted(true);
@@ -129,6 +138,8 @@ export class Planner {
               type: "workflow",
               streamDone: false,
               workflow: workflow as Workflow,
+              speakText: 'delta' in chunk ? chunk.delta : '',
+              isDirect: false,
             });
           }
         }
@@ -157,6 +168,8 @@ export class Planner {
         type: "workflow",
         streamDone: true,
         workflow: workflow,
+        speakText: "计划生成完成",
+        isDirect: true,
       });
     }
     if (workflow.taskPrompt) {

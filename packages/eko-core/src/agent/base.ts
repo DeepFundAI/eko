@@ -222,6 +222,8 @@ export class Agent {
             toolName: result.toolName,
             params: result.input || {},
             toolResult: toolResult,
+            speakText: `${result.toolName} 执行完成`,
+            isDirect: true,
           },
           agentContext
         );

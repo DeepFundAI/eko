@@ -275,6 +275,8 @@ export async function callAgentLLM(
               streamId: textStreamId,
               streamDone: false,
               text: streamText,
+              speakText: chunk.delta,
+              isDirect: false,
             },
             agentContext
           );
@@ -328,6 +330,8 @@ export async function callAgentLLM(
               streamId: thinkStreamId,
               streamDone: false,
               text: thinkText,
+              speakText: chunk.delta,
+              isDirect: false,
             },
             agentContext
           );

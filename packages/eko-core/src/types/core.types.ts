@@ -24,33 +24,45 @@ export type StreamCallbackMessage = {
       type: "workflow";
       streamDone: boolean;
       workflow: Workflow;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "agent_start";
       agentNode: WorkflowAgent;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "text" | "thinking";
       streamId: string;
       streamDone: boolean;
       text: string;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "file";
       mimeType: string;
       data: string;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "tool_streaming";
       toolName: string;
       toolId: string;
       paramsText: string;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "tool_use";
       toolName: string;
       toolId: string;
       params: Record<string, any>;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "tool_running";
@@ -59,6 +71,8 @@ export type StreamCallbackMessage = {
       text: string;
       streamId: string;
       streamDone: boolean;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "tool_result";
@@ -66,16 +80,22 @@ export type StreamCallbackMessage = {
       toolId: string;
       params: Record<string, any>;
       toolResult: ToolResult;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "agent_result";
       agentNode: WorkflowAgent;
       error?: any;
       result?: string;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "error";
       error: unknown;
+      speakText?: string;
+      isDirect?: boolean;
     }
   | {
       type: "finish";
@@ -85,6 +105,8 @@ export type StreamCallbackMessage = {
         completionTokens: number;
         totalTokens: number;
       };
+      speakText?: string;
+      isDirect?: boolean;
     }
 );
 
